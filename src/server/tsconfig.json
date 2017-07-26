@@ -1,0 +1,27 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "es6",
+		"lib": ["es5", "es6", "es7", "dom"],
+		"moduleResolution": "node",
+		"noEmitOnError": true,
+		"noImplicitThis": true,
+		"noImplicitAny": false,
+		"removeComments": false,
+		"preserveConstEnums": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": false,
+		"pretty": false,
+		"sourceMap": true,
+		"inlineSources": false,
+		"baseUrl": "../",
+		"typeRoots": [],
+		"types": [],
+		"jsx": "react",
+		"outDir": "../../dist",
+		"rootDir": "../"
+	}
+}

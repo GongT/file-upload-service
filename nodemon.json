@@ -1,0 +1,6 @@
+{
+	"ignore": [
+		"simple-test-pages/",
+		"package/"
+	]
+}
