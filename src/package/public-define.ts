@@ -14,12 +14,10 @@ export interface FileProperties extends MyDocument {
 	fileHash: string,
 	hasUploaded: boolean,
 	error?: any,
-	holders: IHolder[],
 }
 
-export interface IHolder {
-	holder: string;
-	relatedId: string;
+export interface FilePropertiesClient extends FileProperties {
+	holders: number;
 }
 
 export interface SignResult {
@@ -30,6 +28,6 @@ export interface SignResult {
 
 export interface SignApiResult {
 	complete: boolean;
-	file: FileProperties;
+	file: FilePropertiesClient;
 	signedUrl?: string;
 }

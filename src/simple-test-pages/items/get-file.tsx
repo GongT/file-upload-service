@@ -15,6 +15,7 @@ export class TestGetFile extends React.Component<{}, undefined> {
 		
 		const p = this.context.api.fetchFile(this.context.fileId, 'test');
 		this.context.handlePromise(p);
+		p.then(ret => console.log(ret))
 	}
 	
 	render() {

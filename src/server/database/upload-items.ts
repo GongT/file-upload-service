@@ -1,6 +1,6 @@
-import {DataModel} from "@gongt/ts-stl-server/database/mongodb";
+import {DataModel, TypedDocument} from "@gongt/ts-stl-server/database/mongodb";
 import {Document, DocumentQuery, Schema, SchemaDefinition, SchemaTypes} from "mongoose";
-import {FileProperties, IHolder, MyDocument} from "../../package/public-define";
+import {FileProperties} from "../../package/public-define";
 import {createDebug} from "../debug";
 import {DiedFileError} from "../library/base.driver";
 import {driver} from "../library/driver";
@@ -48,13 +48,18 @@ export const UploadItemsSchema: ObjectSchema = {
 
 const debugUpload = createDebug('db:upload');
 
-export type UploadItemsObj = FileProperties&MyDocument&Document;
+export interface IHolder {
+	holder: string;
+	relatedId: string;
+}
+export type FilePropertiesServer = FileProperties&{holders: IHolder[];};
+export type UploadItemsObj = FilePropertiesServer&TypedDocument<FilePropertiesServer>;
 
 interface KeyValuePair {
 	[id: string]: string;
 }
 
-export class UploadItems extends DataModel<FileProperties> {
+export class UploadItems extends DataModel<FilePropertiesServer> {
 	protected createSchema(): SchemaDefinition {
 		return UploadItemsSchema;
 	}
@@ -68,19 +73,19 @@ export class UploadItems extends DataModel<FileProperties> {
 		
 		let hasMeta = meta && Object.keys(meta).length > 0;
 		
-		let p: DocumentQuery<UploadItemsObj, UploadItemsObj>;
+		let p: Promise<UploadItemsObj>;
 		
 		if (upsert) {
-			p = this.model.findOneAndUpdate({fileHash: hash}, {
+			p = this.findOneAndUpdate({fileHash: hash}, {
 				$setOnInsert: upsert,
 				$set: hasMeta? wrapMeta(meta) : {attachedData: {}},
-			}, {
+			}, <any>{
 				upsert: true,
 				'new': true,
 				setDefaultsOnInsert: true,
 			});
 		} else {
-			p = this.model.findOne({fileHash: hash});
+			p = this.findOne({fileHash: hash});
 		}
 		
 		return p.then((object) => {
@@ -126,16 +131,12 @@ export class UploadItems extends DataModel<FileProperties> {
 		});
 	}
 	
+	/** @deprecated */
 	getItemById(itemId: string): Promise<UploadItemsObj> {
-		return this.model.findById(itemId).then<UploadItemsObj>((d) => {
-			if (!d) {
-				return Promise.reject(d);
-			}
-			return d;
-		});
+		return this.getById(itemId);
 	}
 	
-	hold(isHold: boolean, id: string, {holder, relatedId}: IHolder): Promise<FileProperties> {
+	hold(isHold: boolean, id: string, {holder, relatedId}: IHolder): Promise<any> {
 		const update: any = {};
 		if (isHold) {
 			update.$addToSet = {
@@ -146,7 +147,7 @@ export class UploadItems extends DataModel<FileProperties> {
 				holders: {holder, relatedId},
 			};
 		}
-		return <any> this.model.findByIdAndUpdate(id, update);
+		return this.update({_id: id}, update);
 	}
 }
 

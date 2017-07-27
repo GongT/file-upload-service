@@ -1,6 +1,8 @@
+import {STATUS_CODE} from "@gongt/ts-stl-library/request/protocol";
+import {RequestError} from "@gongt/ts-stl-library/request/request-error";
 import {NextFunction, Request, Response, Router} from "express";
 import {Router as CoreRouter} from "express-serve-static-core";
-import {SignApiResult} from "../package/public-define";
+import {FilePropertiesClient, SignApiResult} from "../package/public-define";
 import {instance as uploadItemsModel, UploadItemsObj} from "./database/upload-items";
 import {createDebug} from "./debug";
 import {driver} from "./library/driver";
@@ -56,11 +58,14 @@ router.post('/sign-upload-url', (req, res, next) => {
 			});
 		}
 	}).then((fileObject: UploadItemsObj) => {
+		const data: FilePropertiesClient = Object.assign({}, fileObject.toObject(), {
+			holders: fileObject.holders.length,
+		});
 		res.send(<SignApiResult>{
 			status: 0,
 			complete: fileObject.hasUploaded,
 			signedUrl: uploadUrl,
-			file: fileObject,
+			file: data,
 		});
 	}, next);
 });
@@ -70,7 +75,7 @@ router.get('/complete-upload', (req, res, next) => {
 		return next(new Error('require param `id`'));
 	}
 	
-	uploadItemsModel.getItemById(req.query.id).then((object) => {
+	uploadItemsModel.getById(req.query.id).then((object) => {
 		if (!object) {
 			throw new Error('no such file record');
 		}
@@ -96,7 +101,10 @@ router.get('/fetch-file', (req, res, next) => {
 	if (!req.query.id) {
 		return next(new Error('require param `id`'));
 	}
-	uploadItemsModel.getItemById(req.query.id).then((data) => {
+	uploadItemsModel.getById(req.query.id).then((fileObject) => {
+		const data: FilePropertiesClient = Object.assign({}, fileObject.toObject(), {
+			holders: fileObject.holders.length,
+		});
 		res.send({
 			status: 0,
 			file: data,
@@ -110,12 +118,21 @@ router.post('/hold-file', (req, res, next) => {
 	}
 	
 	const {id, holder, relatedId,} = req.body;
-	
-	uploadItemsModel.hold(true, id, {holder, relatedId}).then((obj) => {
-		res.send({
-			status: 0,
-			file: obj,
-		});
+	uploadItemsModel.hold(true, id, {holder, relatedId}).then((data) => {
+		if (data.ok) {
+			if (data.nModified > 0) {
+				res.send({
+					status: 0,
+					message: 'holding',
+				});
+			} else {
+				const e = new RequestError(STATUS_CODE.DATA_NOT_EXISTS, 'data not found: ' + id);
+				res.send(e.response());
+			}
+		} else {
+			const e = new RequestError(STATUS_CODE.UNKNOWN_ERROR, 'database update failed');
+			res.send(e.response());
+		}
 	}, next);
 });
 router.post('/release-file', (req, res, next) => {
@@ -123,12 +140,21 @@ router.post('/release-file', (req, res, next) => {
 		return;
 	}
 	const {id, holder, relatedId,} = req.body;
-	
-	uploadItemsModel.hold(false, id, {holder, relatedId}).then((obj) => {
-		res.send({
-			status: 0,
-			file: obj,
-		});
+	uploadItemsModel.hold(false, id, {holder, relatedId}).then((data) => {
+		if (data.ok) {
+			if (data.nModified > 0) {
+				res.send({
+					status: 0,
+					message: 'released',
+				});
+			} else {
+				const e = new RequestError(STATUS_CODE.DATA_NOT_EXISTS, 'data not found: ' + id);
+				res.send(e.response());
+			}
+		} else {
+			const e = new RequestError(STATUS_CODE.UNKNOWN_ERROR, 'database update failed');
+			res.send(e.response());
+		}
 	}, next);
 });
 

@@ -1,16 +1,18 @@
 import {IS_CLIENT, IS_SERVER, isomorphicGlobal} from "@gongt/ts-stl-library/check-environment";
 import {GlobalVariable} from "@gongt/ts-stl-library/pattern/global-page-data";
 import {fetch} from "./fetch";
-import {FileProperties, SignApiResult} from "./public-define";
+import {FilePropertiesClient, SignApiResult} from "./public-define";
 import {sha256_file} from "./sha256_extra";
 import Qs = require('qs');
 
-export interface FilePropertiesExtend extends FileProperties {
+declare const process: any, global: any;
+
+export interface FilePropertiesClientExtend extends FilePropertiesClient {
 	toUrl(internal: boolean): string;
 }
 
 const extendUrlGetter = {
-	toUrl(this: FileProperties, internal: boolean): string{
+	toUrl(this: FilePropertiesClient, internal: boolean): string{
 		if (internal) {
 			return this.urlInternal;
 		} else {
@@ -40,8 +42,7 @@ function noSlashStart(str) {
 
 export interface ServiceOptions {
 	serverHash?: string;
-	holder?: string;
-	projectName: string;
+	projectName?: string;
 	debug?: boolean;
 	serverUrl?: string;
 }
@@ -57,7 +58,7 @@ function getServerToken() {
 }
 export const FileUploadPassingVar = 'FileUploadRemoteUrl';
 function getRequestUrl() {
-	let url = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar);
+	let {url}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
 	if (url) {
 		if (!/https?:/.test(url)) {
 			url = location.protocol + url;
@@ -79,10 +80,14 @@ function guessOptions(opt: ServiceOptions) {
 	if (!opt.serverHash && IS_SERVER) {
 		opt.serverHash = getServerToken();
 	}
-	if (!opt.holder && !opt.projectName && IS_SERVER) {
-		opt.projectName = process.env.PROJECT_NAME;
+	if (!opt.projectName) {
+		if (IS_SERVER) {
+			opt.projectName = process.env.PROJECT_NAME;
+		} else {
+			const {projectName}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
+			opt.projectName = projectName;
+		}
 	}
-	
 }
 function safeUrl(str: string) {
 	if (!str) {
@@ -97,17 +102,20 @@ function safeUrl(str: string) {
 	return str;
 }
 
-export class FileUploadService {
-	private serverHash;
-	private CONFIG_HOLDER = null;
+export class UploadService {
+	private serverHash: string;
+	private projectName: string;
 	private userToken: string;
 	private requestUrl: string;
+	private debug: boolean;
 	
 	constructor(opt: ServiceOptions) {
 		if (!opt) {
 			throw new Error('file-upload: no options.')
 		}
 		guessOptions(opt);
+		
+		this.debug = opt.debug;
 		
 		this.requestUrl = safeUrl(opt.serverUrl);
 		if (!this.requestUrl) {
@@ -121,11 +129,18 @@ export class FileUploadService {
 		} else if (IS_SERVER) {
 			throw new Error('file-upload: require option on server: serverHash')
 		}
-		if (opt.holder || opt.projectName) {
-			this.CONFIG_HOLDER = opt.holder || opt.projectName;
+		if (opt.projectName) {
+			this.projectName = opt.projectName;
 		} else {
 			throw new Error('file-upload: require option: projectName.')
 		}
+	}
+	
+	_pass() {
+		return {
+			url: this.requestUrl.replace(/^https?:/, ''),
+			projectName: this.projectName,
+		};
 	}
 	
 	attachUserToken(newToken: string) {
@@ -149,7 +164,7 @@ export class FileUploadService {
 		});
 	}
 	
-	doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesExtend> {
+	doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesClientExtend> {
 		if (sign.complete) {
 			return Promise.resolve(Object.assign(sign.file, extendUrlGetter));
 		}
@@ -168,7 +183,7 @@ export class FileUploadService {
 		return this.api('get', 'complete-upload', {id: sign.file._id});
 	}
 	
-	simpleUploadFile(fileObject: File, metaData: KeyValuePair = {}): Promise<FilePropertiesExtend> {
+	simpleUploadFile(fileObject: File, metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
 		return this.requestSignUrl(fileObject, metaData).then((sign: SignApiResult) => {
 			console.log('server sign file: %O', sign);
 			if (sign.complete) {
@@ -180,7 +195,7 @@ export class FileUploadService {
 		});
 	}
 	
-	headlessUploadFile(metaData: KeyValuePair = {}): Promise<FilePropertiesExtend> {
+	headlessUploadFile(metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
 		if (typeof window !== 'object') {
 			throw new TypeError(`Can't use headless upload on server.`);
 		}
@@ -214,7 +229,7 @@ export class FileUploadService {
 		return p;
 	}
 	
-	fetchFile(fileId: string): Promise<FilePropertiesExtend> { // get the file url
+	fetchFile(fileId: string): Promise<FilePropertiesClientExtend> { // get the file url
 		return this.api('get', 'fetch-file', {
 			id: fileId,
 			serverHash: this.serverHash,
@@ -223,31 +238,27 @@ export class FileUploadService {
 		});
 	}
 	
-	holdFile(fileId: string, relatedId: string, holder: string = this.CONFIG_HOLDER): Promise<FilePropertiesExtend> {
+	holdFile(fileId: string, relatedId: string, holder: string): Promise<any> {
 		if (!holder) {
 			throw new Error('holdFile: `holder` param is required.');
 		}
 		return this.api('post', 'hold-file', {
 			id: fileId,
-			holder,
+			holder: this.projectName + '::' + holder,
 			relatedId,
 			serverHash: this.serverHash,
-		}).then((ret) => {
-			return ret.file;
 		});
 	}
 	
-	releaseFile(fileId: string, relatedId: string, holder: string = this.CONFIG_HOLDER): Promise<FileProperties> {
+	releaseFile(fileId: string, relatedId: string, holder: string): Promise<any> {
 		if (!holder) {
 			throw new Error('releaseFile: `holder` param is required.');
 		}
 		return this.api('post', 'release-file', {
 			id: fileId,
-			holder,
+			holder: this.projectName + '::' + holder,
 			relatedId,
 			serverHash: this.serverHash,
-		}).then((ret) => {
-			return ret.file;
 		});
 	}
 	
@@ -280,6 +291,7 @@ export class FileUploadService {
 			'X-Image-Login-Token': this.userToken,
 			'Accept': 'application/json',
 			'Content-Type': 'application/json',
+			'X-Image-Upload-Debug': this.debug? 'yes' : '',
 		}, _options.headers);
 		if (!req.credentials) {
 			req.credentials = 'same-origin';

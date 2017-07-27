@@ -1,4 +1,4 @@
-import {FileUploadService} from "@gongt/file-upload-client/index";
+import {UploadService} from "@gongt/file-upload-client/index";
 import {FileProperties, SignResult} from "@gongt/file-upload-client/public-define";
 import * as React from "react";
 
@@ -13,7 +13,7 @@ export interface TestingContext {
 	shareFile: FileProperties;
 	fileObject: File;
 	fileId: string;
-	api: FileUploadService;
+	api: UploadService;
 	handleResult: (res: any) => void;
 	handlePromise: (p: Promise<any>) => void;
 	updateContext: (up: any) => void;
