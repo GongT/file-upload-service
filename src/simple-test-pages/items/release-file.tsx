@@ -28,9 +28,9 @@ export class TestReleaseFile extends React.Component<{}, undefined> {
 			title="删除文件">
 			<FileIdDisplay />
 			<input onChange={e => this.change('name', e.target.value)}
-				type="text" name="ref_name" placeholder="引用的类型（数据表名）" className="form-control" autocomplete="off"/>
+				type="text" name="ref_name" placeholder="引用的类型（数据表名）" className="form-control" autoComplete="off"/>
 			<input onChange={e => this.change('id', e.target.value)}
-				type="text" name="ref_id" placeholder="引用的ID（数据行_id）" className="form-control" autocomplete="off"/>
+				type="text" name="ref_id" placeholder="引用的ID（数据行_id）" className="form-control" autoComplete="off"/>
 		</BS3PanelForm>
 	}
 	
