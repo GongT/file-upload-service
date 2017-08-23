@@ -1,252 +1,131 @@
-import {IS_CLIENT, IS_SERVER, isomorphicGlobal} from "@gongt/ts-stl-library/check-environment";
-import {GlobalVariable} from "@gongt/ts-stl-library/pattern/global-page-data";
-import {fetch} from "./fetch";
-import {FilePropertiesClient, SignApiResult} from "./public-define";
-import {sha256_file} from "./sha256_extra";
-import Qs = require('qs');
+import {createInputField} from "./lib/dom";
+import {ServiceApi} from "./lib/fetch";
+import {extendUrlGetter, FilePropertiesClientExtend} from "./lib/get-url";
+import {normalizeOptions} from "./lib/options";
+import {sha256_file} from "./lib/sha256_extra";
+import {SignApiResult} from "./public-define";
 
-declare const process: any, global: any;
-
-export interface FilePropertiesClientExtend extends FilePropertiesClient {
-	toUrl(internal: boolean): string;
-}
-
-const extendUrlGetter = {
-	toUrl(this: FilePropertiesClient, internal: boolean): string{
-		if (internal) {
-			return this.urlInternal;
-		} else {
-			return this.url;
-		}
-	},
-};
-
-declare const require: any;
-try {
-	global['require']("source-map-support/register");
-} catch (e) {
-}
+export {ImageProcessor} from "./processor/image";
 
 export interface KeyValuePair {
 	[id: string]: string;
 }
 
-declare const JsonEnv: any;
-
-function slashEnd(str) {
-	return str.replace(/([^\/])$/, '$1/');
-}
-function noSlashStart(str) {
-	return str.replace(/^\//g, '$1/');
-}
+export const FileUploadPassingVar = 'FileUploadRemoteUrl';
 
 export interface ServiceOptions {
 	serverHash?: string;
 	projectName?: string;
 	debug?: boolean;
 	serverUrl?: string;
+	type?: EUploadType;
 }
 
-let fileObject;
-
-function getServerToken() {
-	try {
-		const {JsonEnv} = require('@gongt/jenv-data');
-		return JsonEnv.serverRequestKey;
-	} catch (e) {
-	}
-}
-export const FileUploadPassingVar = 'FileUploadRemoteUrl';
-function getRequestUrl() {
-	let {serverUrl}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
-	if (serverUrl) {
-		if (!/https?:/.test(serverUrl)) {
-			serverUrl = location.protocol + serverUrl;
-		}
-	} else if (IS_SERVER) {
-		try {
-			const {JsonEnv} = require('@gongt/jenv-data');
-			serverUrl = JsonEnv.upload['apiEndPoint'] || 'http://file-upload.' + JsonEnv.baseDomainName;
-		} catch (e) {
-		}
-	}
-	return serverUrl;
-}
-
-function guessOptions(opt: ServiceOptions) {
-	if (!opt.serverUrl) {
-		opt.serverUrl = getRequestUrl();
-	}
-	if (!opt.serverHash && IS_SERVER) {
-		opt.serverHash = getServerToken();
-	}
-	if (!opt.projectName) {
-		if (IS_SERVER) {
-			opt.projectName = process.env.PROJECT_NAME;
-		} else {
-			const {projectName}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
-			opt.projectName = projectName;
-		}
-	}
-}
-function safeUrl(str: string) {
-	if (!str) {
-		return str;
-	}
-	if (!/^https?:/.test(str)) {
-		str = location.protocol + str;
-	}
-	if (!/\/$/.test(str)) {
-		str += '/';
-	}
-	return str;
+export enum EUploadType {
+	image = 'image',
+	file = 'file',
 }
 
 export class UploadService {
-	private serverHash: string;
-	private projectName: string;
-	private userToken: string;
-	private requestUrl: string;
-	private debug: boolean;
+	private api: ServiceApi;
 	
-	constructor(opt: ServiceOptions) {
-		if (!opt) {
-			throw new Error('file-upload: no options.')
-		}
-		guessOptions(opt);
-		
-		this.debug = opt.debug;
-		
-		this.requestUrl = safeUrl(opt.serverUrl);
-		if (!this.requestUrl) {
-			throw new Error('file-upload: require option: requestUrl');
-		}
-		if (opt.serverHash) {
-			if (IS_CLIENT) {
-				throw new Error('file-upload: do not use option on client: serverHash')
-			}
-			this.serverHash = opt.serverHash;
-		} else if (IS_SERVER) {
-			throw new Error('file-upload: require option on server: serverHash')
-		}
-		if (opt.projectName) {
-			this.projectName = opt.projectName;
-		} else {
-			throw new Error('file-upload: require option: projectName.')
-		}
+	static readonly image = EUploadType.image;
+	static readonly file = EUploadType.file;
+	
+	constructor(private opt: ServiceOptions) {
+		normalizeOptions(opt);
+		this.api = new ServiceApi(opt);
+	}
+	
+	/** @internal */
+	getOptions() {
+		return Object.assign({}, this.opt);
+	}
+	
+	/** @internal */
+	getApiRef() {
+		return this.api;
+	}
+	
+	public attachUserToken(newToken: string) {
+		this.api.attachUserToken(newToken);
 	}
 	
 	passToClient() {
 		return {
-			serverUrl: this.requestUrl.replace(/^https?:/, ''),
-			projectName: this.projectName,
+			serverUrl: this.opt.serverUrl.replace(/^https?:/, ''),
+			projectName: this.opt.projectName,
+			type: this.opt.type,
 		};
 	}
 	
-	attachUserToken(newToken: string) {
-		this.userToken = newToken;
-	}
-	
-	requestSignUrl(fileObject: File, metaData: KeyValuePair = {}): Promise<SignApiResult> {
+	async requestSignUrl(fileObject: File, metaData: KeyValuePair = {}): Promise<SignApiResult> {
 		if (!fileObject) {
 			return Promise.reject(new Error('please select file'));
 		}
 		if (fileObject.size > 1000 * 1000 * 500) {
 			return Promise.reject(new Error('file too large, must < 500kb'));
 		}
-		return <any> sha256_file(fileObject).then((hash) => {
-			console.log('hash file: %s', hash);
-			return this.api('post', 'sign-upload-url', {
-				mime: fileObject.type,
-				meta: metaData,
-				hash: hash,
-			});
+		const hash: string = await sha256_file(fileObject);
+		console.log('hash file: %s', hash);
+		return this.api.request('post', 'sign-upload-url', {
+			mime: fileObject.type,
+			meta: metaData,
+			hash: hash,
 		});
 	}
 	
-	doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesClientExtend> {
+	async doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesClientExtend> {
 		if (sign.complete) {
 			return Promise.resolve(Object.assign(sign.file, extendUrlGetter));
 		}
-		return this.api('put', sign.signedUrl, fileObject, {
+		if (!sign.signedUrl) {
+			return Promise.reject(new Error('sign failed'));
+		}
+		await this.api.request('put', sign.signedUrl, fileObject, {
 			headers: {
 				'Content-Type': fileObject.type,
 			},
-		}).then(() => {
-			return this.completeUploadFile(sign);
-		}).then(() => {
-			return Object.assign(sign.file, extendUrlGetter);
 		});
+		await this.completeUploadFile(sign);
+		return Object.assign(sign.file, extendUrlGetter);
 	}
 	
 	completeUploadFile(sign: SignApiResult) {
-		return this.api('get', 'complete-upload', {id: sign.file._id});
+		return this.api.request('get', 'complete-upload', {id: sign.file._id});
 	}
 	
-	simpleUploadFile(fileObject: File, metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
-		return this.requestSignUrl(fileObject, metaData).then((sign: SignApiResult) => {
-			console.log('server sign file: %O', sign);
-			if (sign.complete) {
-				console.info('this file already uploaded.');
-				return Object.assign(sign.file, extendUrlGetter);
-			} else {
-				return this.doUploadFile(sign, fileObject);
-			}
-		});
+	async simpleUploadFile(fileObject: File, metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
+		const sign: SignApiResult = await this.requestSignUrl(fileObject, metaData);
+		console.log('server sign file: %O', sign);
+		if (sign.complete) {
+			console.info('this file already uploaded.');
+			return Object.assign(sign.file, extendUrlGetter);
+		} else {
+			return this.doUploadFile(sign, fileObject);
+		}
 	}
 	
-	headlessUploadFile(metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
-		if (typeof window !== 'object') {
-			throw new TypeError(`Can't use headless upload on server.`);
-		}
-		if (typeof event !== 'object') {
-			throw new TypeError(`headless upload must call during click callback.`);
-		}
-		
-		const file: HTMLInputElement = <any> document.createElement('INPUT');
-		file.setAttribute('type', 'file');
-		file.style.display = 'none';
-		
-		document.body.appendChild(file);
-		const p: any = new Promise((resolve, reject) => {
-			file.addEventListener('change', () => {
-				if (file.files && file.files[0]) {
-					const p1 = this.simpleUploadFile(file.files[0], metaData);
-					p1.then(resolve, reject);
-					const cb = destroy.bind(undefined, file);
-					p1.then(cb, cb)
-				} else {
-					reject();
-				}
-			});
-		});
-		file.click();
-		if (fileObject) {
-			destroy(fileObject);
-		}
-		fileObject = file;
-		
-		return p;
+	async headlessUploadFile(metaData: KeyValuePair = {}): Promise<FilePropertiesClientExtend> {
+		const file = await createInputField();
+		return this.simpleUploadFile(file, metaData);
 	}
 	
-	fetchFile(fileId: string): Promise<FilePropertiesClientExtend> { // get the file url
-		return this.api('get', 'fetch-file', {
+	async fetchFile(fileId: string): Promise<FilePropertiesClientExtend> { // get the file url
+		const ret = await this.api.request('get', 'fetch-file', {
 			id: fileId,
-			serverHash: this.serverHash,
-		}).then((ret) => {
-			return Object.assign(ret.file, extendUrlGetter);
 		});
+		return Object.assign(ret.file, extendUrlGetter);
 	}
 	
 	holdFile(fileId: string, relatedId: string, holder: string): Promise<any> {
 		if (!holder) {
 			throw new Error('holdFile: `holder` param is required.');
 		}
-		return this.api('post', 'hold-file', {
+		return this.api.request('post', 'hold-file', {
 			id: fileId,
-			holder: this.projectName + '::' + holder,
+			holder: this.opt.projectName + '::' + holder,
 			relatedId,
-			serverHash: this.serverHash,
 		});
 	}
 	
@@ -254,81 +133,10 @@ export class UploadService {
 		if (!holder) {
 			throw new Error('releaseFile: `holder` param is required.');
 		}
-		return this.api('post', 'release-file', {
+		return this.api.request('post', 'release-file', {
 			id: fileId,
-			holder: this.projectName + '::' + holder,
+			holder: this.opt.projectName + '::' + holder,
 			relatedId,
-			serverHash: this.serverHash,
 		});
-	}
-	
-	api(method: string, uri: string, params?: any, _options: any = {}) {
-		let req;
-		if (!/^https?:\/\//.test(uri)) {
-			uri = this.requestUrl + 'api/' + noSlashStart(uri);
-		}
-		method = method.toLowerCase();
-		if (params) {
-			if (method === 'post') {
-				req = {
-					method: method,
-					body: JSON.stringify(params),
-				};
-			} else if (method === 'put') {
-				req = {
-					method: method,
-					body: params,
-				};
-			} else {
-				uri = uri + '?' + Qs.stringify(params);
-				req = {
-					method: method,
-				};
-			}
-		}
-		
-		req.headers = Object.assign({
-			'X-Image-Login-Token': this.userToken,
-			'Accept': 'application/json',
-			'Content-Type': 'application/json',
-			'X-Image-Upload-Debug': this.debug? 'yes' : '',
-		}, _options.headers);
-		if (!req.credentials) {
-			req.credentials = 'same-origin';
-		}
-		req.mode = 'cors';
-		req.redirect = 'follow';
-		req.cache = 'no-cache';
-		
-		return fetch(uri, req).then((response) => {
-			if (response.status === 200) {
-				if (/\/json/.test(response.headers.get('content-type'))) {
-					return response.json();
-				} else {
-					return response.text();
-				}
-			}
-			throw {
-				status: response.status,
-				message: `http error: ${response.statusText}`,
-			};
-		}).then((data) => {
-			if (typeof data === 'string') {
-				if (data) {
-					throw new Error(data);
-				}
-			} else if (data.status === 0) {
-				return data;
-			} else {
-				throw data;
-			}
-		});
-	}
-}
-
-function destroy(file: HTMLInputElement) {
-	document.body.removeChild(file);
-	if (fileObject === file) {
-		fileObject = null;
 	}
 }

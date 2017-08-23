@@ -1,6 +1,4 @@
-/// <reference path="./test.d.ts"/>
-
-import {sha256} from "sha.js";
+const {sha256} = require("sha.js");
 
 export function sha256_file(f: File): Promise<string> {
 	const reader = new FileReader();

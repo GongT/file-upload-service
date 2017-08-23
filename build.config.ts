@@ -40,12 +40,12 @@ build.shellCommand('node');
 build.addPlugin(EPlugins.jenv);
 
 build.addPlugin(EPlugins.typescript, {
-	source: 'src/server',
-	target: 'dist',
-});
-build.addPlugin(EPlugins.typescript, {
 	source: 'src/package',
 	target: 'dist/npm-package',
+});
+build.addPlugin(EPlugins.typescript, {
+	source: 'src/server',
+	target: 'dist',
 });
 build.addPlugin(EPlugins.typescript, {
 	source: 'src/simple-test-pages',

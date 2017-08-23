@@ -14,7 +14,8 @@ screen.*
 package-lock.json
 !.*ignore
 !.gitinclude
-dist/
 dist/npm-package/
+dist/
 dist/client/
+!.babelrc
 ### <<< END MICRO-BUILD SECTION

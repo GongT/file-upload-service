@@ -1,21 +1,24 @@
-import {FileProperties, SignResult} from "../../package/public-define";
+import {createLogger} from "@gongt/ts-stl-server/debug";
+import {LOG_LEVEL} from "@gongt/ts-stl-server/log/levels";
+import {FileProperties, SaveResult, SignResult} from "../../package/public-define";
 import {createFileName, getFileRelatedToRootPath} from "../database/generate-key";
-import {createDebug} from "../debug";
-import {compareHash, hashBuffer} from "./helper/hash";
+import {DriverOptions, SaveGenerateFileOptions, StorageBackend} from "./backend";
+import {getBackend} from "./get-backend";
 import {downloadFile} from "./helper/request";
-import request = require("request");
 
-const debugCheck = createDebug('hash-check');
+const debug = createLogger(LOG_LEVEL.DEBUG, 'driver');
 
 export class DiedFileError extends Error {
 }
 
-export abstract class DriverBase {
-	abstract signKey(fileType: string, key: string): Promise<SignResult>;
+export class StorageDriver {
+	protected backend: StorageBackend;
+	protected readonly options: DriverOptions;
 	
-	protected signExpire = 60;
-	
-	constructor() {
+	constructor(options: DriverOptions) {
+		debug('create %s -> %s driver', options.type, options.bucket);
+		this.options = options;
+		this.backend = getBackend(options.type, options);
 	}
 	
 	sign(object: FileProperties): Promise<SignResult> {
@@ -24,25 +27,18 @@ export abstract class DriverBase {
 			throw new Error('not support file type: ' + object.mime + ', please compress them.');
 		}
 		const filePath = getFileRelatedToRootPath(object.createdAt, key);
-		return this.signKey(object.mime, filePath);
+		return this.backend.signKey(object.mime, filePath);
 	}
 	
-	isFileReady(object: FileProperties): Promise<boolean> {
+	download(object: FileProperties): Promise<Buffer> {
 		if (!object.urlInternal) {
 			// file object not even created
-			return Promise.resolve(false);
+			return null;
 		}
-		
-		return downloadFile(object).then((gotBody) => {
-			if (!gotBody) {
-				return <any>false;
-			}
-			
-			if (!compareHash(object, hashBuffer(<Buffer>gotBody))) {
-				throw new DiedFileError('uploaded file hash failed.');
-			}
-			
-			return true;
-		});
+		return downloadFile(object);
+	}
+	
+	async saveGernerated(options: SaveGenerateFileOptions): Promise<SaveResult> {
+		return this.backend.save(options);
 	}
 }

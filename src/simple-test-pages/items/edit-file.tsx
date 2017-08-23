@@ -1,24 +1,34 @@
+import {BaseComponent, BindThis} from "@gongt/ts-stl-client/react/stateless-component";
+import {
+	ActionTrigger, CANCEL_TRIGGER, ReactReduxConnector,
+	TDispatchProps,
+} from "@gongt/ts-stl-client/redux/react-connect";
 import * as React from "react";
-import {MetaInput} from "../meta-input";
+import {AppState} from "../";
+import {MetaInput} from "../components/meta-input";
 import {BS3PanelForm} from "../panel";
-import {testContext} from "../share-variables";
-import {FileIdDisplay} from "./file-id-display.inc";
+import {IFileIdProps, selectFileIdResult} from "../redux/file-id";
+import {RequestAction, RequestHandler} from "../redux/request-handler";
+import {FileIdDisplay} from "../components/file-id";
 
-export class TestEditFile extends React.Component<{}, undefined> {
-	static contextTypes = testContext;
-	
+export interface IProps extends TDispatchProps, IFileIdProps {
+}
+
+const conn = new ReactReduxConnector<AppState, IProps>();
+conn.addMapper(selectFileIdResult);
+
+@conn.connect
+export class TestEditFile extends BaseComponent<IProps> {
+	@BindThis
+	@ActionTrigger(RequestAction, RequestHandler)
 	onSubmit(e) {
 		e.preventDefault();
 		alert('not impl');
 		
 		if (!this.context.shareFile || !this.context.shareFile._id) {
-			return alert('no current file.');
+			alert('input id first.');
+			return CANCEL_TRIGGER;
 		}
-		
-		/*
-		const p = this.context.api.update(this.context.shareFile._id, 'test');
-		this.context.handlePromise(p);
-		*/
 	}
 	
 	render() {
@@ -26,8 +36,8 @@ export class TestEditFile extends React.Component<{}, undefined> {
 			title="修改文件附加信息"
 			onSubmit={this.onSubmit.bind(this)}
 		>
-			<FileIdDisplay />
-			<MetaInput />
+			<FileIdDisplay/>
+			<MetaInput/>
 		</BS3PanelForm>
 	}
 }

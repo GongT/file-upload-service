@@ -1,16 +1,33 @@
+import {BaseComponent, BindThis} from "@gongt/ts-stl-client/react/stateless-component";
+import {
+	ActionTrigger,
+	CANCEL_TRIGGER,
+	ReactReduxConnector,
+	TDispatchProps,
+} from "@gongt/ts-stl-client/redux/react-connect";
 import * as React from "react";
+import {AppState} from "../";
 import {BS3PanelForm} from "../panel";
-import {testContext} from "../share-variables";
-import {FileIdDisplay} from "./file-id-display.inc";
+import {IFileIdProps, selectFileIdResult} from "../redux/file-id";
+import {RequestAction, RequestHandler} from "../redux/request-handler";
+import {FileIdDisplay} from "../components/file-id";
 
-export class TestGetFile extends React.Component<{}, undefined> {
-	static contextTypes = testContext;
-	
+export interface IProps extends TDispatchProps, IFileIdProps {
+}
+
+const conn = new ReactReduxConnector<AppState, IProps>();
+conn.addMapper(selectFileIdResult);
+
+@conn.connect
+export class TestGetFile extends BaseComponent<IProps> {
+	@BindThis
+	@ActionTrigger(RequestAction, RequestHandler)
 	onSubmit(e) {
 		e.preventDefault();
 		
 		if (!this.context.fileId) {
-			return alert('input id first.');
+			alert('input id first.');
+			return CANCEL_TRIGGER;
 		}
 		
 		const p = this.context.api.fetchFile(this.context.fileId, 'test');
@@ -23,7 +40,7 @@ export class TestGetFile extends React.Component<{}, undefined> {
 			styleClass="default"
 			onSubmit={this.onSubmit.bind(this)}
 			title="查询文件">
-			<FileIdDisplay />
+			<FileIdDisplay/>
 		</BS3PanelForm>
 	}
 }

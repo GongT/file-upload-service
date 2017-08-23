@@ -1,34 +1,44 @@
+import {BaseComponent, BindThis} from "@gongt/ts-stl-client/react/stateless-component";
+import {
+	ActionTrigger,
+	CANCEL_TRIGGER,
+	ReactReduxConnector,
+	TDispatchProps,
+} from "@gongt/ts-stl-client/redux/react-connect";
 import * as React from "react";
+import {AppState} from "../";
 import {BS3PanelForm} from "../panel";
-import {testContext} from "../share-variables";
+import {CompleteAction, CompleteFailAction, CompleteHandler} from "../redux/complete";
+import {RequestAction, RequestHandler} from "../redux/request-handler";
 
-export class TestCheckFileComplete extends React.Component<{}, undefined> {
-	static contextTypes = testContext;
-	
+export interface IProps extends TDispatchProps {
+	sign?: any;
+}
+
+const conn = new ReactReduxConnector<AppState, IProps>();
+conn.addMapper((state) => {
+	return {
+		sign: state.SignHandler,
+	};
+});
+
+@conn.connect
+export class TestCheckFileComplete extends BaseComponent<IProps> {
+	@BindThis
+	@ActionTrigger(RequestAction, RequestHandler)
 	onSubmit(e) {
 		e.preventDefault();
-		if (!this.context.signOk) {
-			return alert('not signed.');
+		if (!this.props.sign) {
+			alert('not signed.');
+			return CANCEL_TRIGGER;
 		}
-		
-		this.context.updateContext({
-			complete: 'requesting',
-		});
-		
-		const p = this.context.api.completeUploadFile(this.context.sign);
-		this.context.handlePromise(p);
-		
-		p.then((data) => {
-			this.context.updateContext({
-				complete: data,
-			});
-		}, (e) => {
-			this.context.updateContext({
-				complete: e,
-			});
-		});
-		
-		this.context.handlePromise(p);
+		return {
+			api: 'completeUploadFile',
+			args: [this.props.sign],
+			success: CompleteAction,
+			failed: CompleteFailAction,
+			store: CompleteHandler,
+		};
 	}
 	
 	render() {

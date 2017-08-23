@@ -2,18 +2,17 @@ import {createHash} from "crypto";
 import {define as defineMimeType, extension} from "mime";
 import {resolve} from "path";
 
-const ROOT_FOLDER = JsonEnv.upload.file.rootFolder.replace(/^\//g, '');
-
 defineMimeType({
 	'application/x-zip-compressed': ['zip'],
 });
 
 export function getFileRelatedToRootPath(time: Date, fileKey: string) {
-	return resolve('/', ROOT_FOLDER,
+	return resolve('/',
 		time.getUTCFullYear().toString(),
 		(time.getUTCMonth() + 1).toString(),
 		time.getUTCDate().toString(),
-		fileKey).replace(/^\//g, '');
+		fileKey,
+	).replace(/^\//g, '');
 }
 
 export function createFileName(time: Date, fileHash: string, mime: string) {
@@ -23,7 +22,7 @@ export function createFileName(time: Date, fileHash: string, mime: string) {
 		return null;
 	}
 	
-	return `${time.getUTCHours()}${time.getUTCMinutes()}${time.getUTCSeconds()}_${time.getUTCMilliseconds()}_${md5(fileHash)}.${extStr}`
+	return `${md5(fileHash)}.${time.getUTCHours()}${time.getUTCMinutes()}${time.getUTCSeconds()}.${extStr}`
 }
 
 function md5(data) {

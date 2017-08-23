@@ -1,9 +1,9 @@
-import ReadableStream = NodeJS.ReadableStream;
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
+import {createLogger} from "@gongt/ts-stl-server/debug";
 import {createHash} from "crypto";
 import {FileProperties} from "../../../package/public-define";
-import {createDebug} from "../../debug";
 
-const debugCheck = createDebug('hash-check');
+const debugCheck = createLogger(LOG_LEVEL.DEBUG, 'hash-check');
 
 export function hashBuffer(buffer: Buffer): string {
 	const hashString = createHash('sha256').update(buffer).digest().toString('hex').toLowerCase();
