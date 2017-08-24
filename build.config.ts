@@ -2,6 +2,7 @@
 import {JsonEnv} from "@gongt/jenv-data";
 import {EPlugins, MicroBuildConfig} from "./.micro-build/x/microbuild-config";
 import {MicroBuildHelper} from "./.micro-build/x/microbuild-helper";
+
 declare const build: MicroBuildConfig;
 declare const helper: MicroBuildHelper;
 /*
@@ -27,7 +28,7 @@ build.systemd({
 build.forceLocalDns();
 build.isInChina(JsonEnv.gfw.isInChina, JsonEnv.gfw);
 build.npmCacheLayer(JsonEnv.gfw.npmRegistry);
-build.npmInstall('./package.json', ['vips-dev', 'python', 'make', 'g++']);
+build.npmInstall('./package.json', ['vips-dev', 'fftw-dev', 'python', 'make', 'g++', 'binutils']);
 build.github(JsonEnv.gfw.github);
 
 build.forwardPort(80);
