@@ -24,9 +24,13 @@ jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-library');
 jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-client');
 
 export function createDebugPages(type: EUploadType, app: Application) {
+	let serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
+	if (!!process.env.RUN_IN_DOCKER) {
+		serverUrl = 'http://file-upload.' + JsonEnv.baseDomainName + '/';
+	}
 	const client = new UploadService({
 		projectName: 'self-test',
-		serverUrl: 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/',
+		serverUrl,
 		type,
 	});
 	
