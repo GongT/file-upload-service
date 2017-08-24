@@ -17,6 +17,7 @@ export interface CompleteResponse extends ApiResponse {
 }
 
 const sharp = require('sharp');
+sharp.cache(false);
 
 export function resizeImageApi<T extends FilePropertiesServer>(model: UploadBase<T>) {
 	const handler = new JsonApiHandler<CompleteRequest, CompleteResponse>(ERequestType.TYPE_GET, '/process/resize');
