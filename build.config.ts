@@ -29,7 +29,7 @@ build.forceLocalDns();
 build.isInChina(JsonEnv.gfw.isInChina, JsonEnv.gfw);
 build.npmCacheLayer(JsonEnv.gfw.npmRegistry);
 build.systemInstall('vips');
-build.npmInstall('./package.json', ['fftw-dev', 'python', 'make', 'g++', 'binutils']);
+build.npmInstall('./package.json', ['vips-dev', 'fftw-dev', 'python', 'make', 'g++', 'binutils']);
 build.github(JsonEnv.gfw.github);
 
 build.forwardPort(80);
