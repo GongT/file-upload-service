@@ -12,8 +12,8 @@
 	"dependencies": {
 		"@gongt/jenv-data": "^1.2.7",
 		"@gongt/jspm": "^1.0.6",
-		"@gongt/ts-stl-library": "^1.5.3",
-		"@gongt/ts-stl-server": "^1.5.3",
+		"@gongt/ts-stl-library": "^1.5.4",
+		"@gongt/ts-stl-server": "^1.5.4",
 		"@types/redux": "^3.6.31",
 		"ali-oss": "^4.10.0",
 		"aws-sdk": "^2.103.0",

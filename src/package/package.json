@@ -1,10 +1,10 @@
 {
 	"name": "@gongt/file-upload-client",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"description": "",
 	"main": "./index.js",
 	"dependencies": {
-		"@gongt/ts-stl-library": "^1.5.3",
+		"@gongt/ts-stl-library": "^1.5.4",
 		"node-fetch": "^1.7.2",
 		"whatwg-fetch": "^2.0.3",
 		"qs": "^6.5.0",
