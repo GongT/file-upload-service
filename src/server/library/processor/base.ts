@@ -1,5 +1,5 @@
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
 import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
-import {createLogger} from "@gongt/ts-stl-server/debug";
 import {FilePropertiesServer} from "../../../package/public-define";
 import {MongoObj} from "../../database/base";
 import {compareHash, hashBuffer} from "../helper/hash";

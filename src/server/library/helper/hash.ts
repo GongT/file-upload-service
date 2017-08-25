@@ -1,5 +1,5 @@
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
 import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
-import {createLogger} from "@gongt/ts-stl-server/debug";
 import {createHash} from "crypto";
 import {FileProperties} from "../../../package/public-define";
 

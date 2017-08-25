@@ -1,4 +1,4 @@
-import {createLogger} from "@gongt/ts-stl-server/debug";
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
 import {LOG_LEVEL} from "@gongt/ts-stl-server/log/levels";
 import {FileProperties, SaveResult, SignResult} from "../../package/public-define";
 import {createFileName, getFileRelatedToRootPath} from "../database/generate-key";

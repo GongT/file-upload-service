@@ -20,8 +20,10 @@ jspm.clientCodeLocation(
 );
 jspm.jspmConfig().registerExtension('css');
 
-jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-library');
-jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-client');
+if (!process.env.RUN_IN_DOCKER) {
+	jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-library');
+	jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-client');
+}
 
 export function createDebugPages(type: EUploadType, app: Application) {
 	let serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
