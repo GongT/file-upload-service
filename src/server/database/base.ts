@@ -19,32 +19,13 @@ import {KeyValuePair} from "../../package";
 import {FilePropertiesServer, IHolder} from "../../package/public-define";
 import {StorageDriver} from "../library/base.driver";
 
-export type BasicTypes = typeof Function|typeof Boolean|typeof Number|typeof String|typeof Object|any;
-
-export interface ObjectSchemaDefine {
-	type: BasicTypes|ObjectSchema|(BasicTypes)[]|ObjectSchema[];
-	max?: number;
-	min?: number;
-	default?: any;
-	required?: boolean|string;
-	get?: (val: any) => any;
-	set?: (val: any) => any;
-	index?: Object|boolean|string;
-	unique?: boolean;
-	enum?: any[];
-}
-
-export interface ObjectSchema {
-	[id: string]: ObjectSchemaDefine;
-}
-
 export type MongoObj<T> = T&TypedDocument<T>;
 
 const holderSchema = new Schema({
 	holder: String,
 	relatedId: String,
 }, {_id: false});
-export const UploadItemsSchema: ObjectSchema = {
+export const UploadItemsSchema: SchemaDefinition = {
 	url: {
 		type: String,
 		required: true,

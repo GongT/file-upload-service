@@ -2,9 +2,9 @@ import {DocumentQuery, Schema, SchemaDefinition, SchemaTypes} from "mongoose";
 import {FilePropertiesServer} from "../../package/public-define";
 import {EBackendType} from "../library/backend";
 import {CommonFileProcessor} from "../library/processor/file";
-import {DatabaseOptions, ObjectSchema, UploadBase} from "./base";
+import {DatabaseOptions, UploadBase} from "./base";
 
-export const UploadItemsSchema: ObjectSchema = {};
+export const UploadItemsSchema: SchemaDefinition = {};
 
 interface KeyValuePair {
 	[id: string]: string;

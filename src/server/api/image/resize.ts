@@ -4,6 +4,7 @@ import {JsonApiHandler} from "@gongt/ts-stl-server/express/api-handler";
 import {ValueChecker} from "@gongt/ts-stl-server/value-checker/value-checker";
 import {FilePropertiesServer} from "../../../package/public-define";
 import {UploadBase} from "../../database/base";
+import {ImageResizeModel} from "../../database/image-resize";
 import {hashBuffer} from "../../library/helper/hash";
 
 export interface CompleteRequest extends ApiRequest {
@@ -20,12 +21,27 @@ const sharp = require('sharp');
 sharp.cache(false);
 
 export function resizeImageApi<T extends FilePropertiesServer>(model: UploadBase<T>) {
+	const imageResize = new ImageResizeModel();
+	
 	const handler = new JsonApiHandler<CompleteRequest, CompleteResponse>(ERequestType.TYPE_GET, '/process/resize');
 	handler.handleArgument('id').fromGet().filter(new ValueChecker().isString().isNotEmpty());
 	handler.handleArgument('width').fromGet().filter(new ValueChecker().isString().isInt({min: 50, max: 1800}));
 	handler.handleArgument('height').fromGet().filter(new ValueChecker().isString().isInt({min: 50, max: 1800}));
 	handler.setHandler(async (context) => {
 		const {id, width, height} = context.params;
+		const resizeId = `${width}x${height}`;
+		
+		const exists = await imageResize.checkHasResize({
+			imageId: id,
+			resizeId,
+		});
+		if (exists) {
+			return {
+				created: false,
+				resizeUrl: exists.url,
+			};
+		}
+		
 		const file = await model.getById(id);
 		if (!file) {
 			throw new Error('no such file');
@@ -56,7 +72,19 @@ export function resizeImageApi<T extends FilePropertiesServer>(model: UploadBase
 			},
 		});
 		
+		const n = await imageResize.uploadedImage({
+			imageId: id,
+			resizeId,
+			path: resizedUrl,
+			url: fileProps.fetchUrl,
+		});
+		
+		if (!n || !n.ok) {
+			throw new Error('database operation failed.');
+		}
+		
 		return {
+			created: n.nModified,
 			resizeUrl: fileProps.fetchUrl,
 		};
 	});

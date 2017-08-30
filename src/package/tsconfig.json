@@ -18,6 +18,7 @@
 		"pretty": true,
 		"sourceMap": true,
 		"inlineSources": true,
+		"sourceRoot": "/data/node_modules/@gongt/file-upload-client",
 		"baseUrl": "",
 		"typeRoots": [],
 		"types": [],

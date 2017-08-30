@@ -22,6 +22,9 @@
 		"types": [],
 		"jsx": "react",
 		"outDir": "../../dist",
-		"rootDir": "../"
+		"rootDir": "../",
+		"paths": {
+			"mongoose": ["../node_modules/@types/mongoose/index.d.ts"]
+		}
 	}
 }
