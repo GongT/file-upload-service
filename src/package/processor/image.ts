@@ -15,7 +15,11 @@ export class ImageProcessor {
 	
 	resizeWithin(id: string, width: number, height: number) {
 		return this.api.request('get', 'process/resize', {id, width, height}).then((data) => {
-			console.log(data);
+			return {
+				created: data.created,
+				message: data.message,
+				resizeUrl: data.resizeUrl,
+			};
 		});
 	}
 	

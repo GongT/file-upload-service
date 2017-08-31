@@ -1,10 +1,10 @@
 {
 	"name": "@gongt/file-upload-client",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"description": "",
 	"main": "./index.js",
 	"dependencies": {
-		"@gongt/ts-stl-library": "^1.5.4",
+		"@gongt/ts-stl-library": ">=1.5.6",
 		"node-fetch": "^1.7.2",
 		"whatwg-fetch": "^2.0.3",
 		"qs": "^6.5.0",
@@ -14,7 +14,7 @@
 	"devDependencies": {
 		"@gongt/dts-concat": "*",
 		"@gongt/jenv-data": "*",
-		"@types/node": "^8.0.25",
+		"@types/node": "^8.0.26",
 		"@types/qs": "^6.5.0"
 	},
 	"peerDependencies": {}
