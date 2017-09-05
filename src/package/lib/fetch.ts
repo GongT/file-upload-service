@@ -1,3 +1,4 @@
+import {IS_SERVER} from "@gongt/ts-stl-library/check-environment";
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
 import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {ServiceOptions} from "../";
@@ -35,6 +36,9 @@ export class ServiceApi {
 			'Content-Type': 'application/json',
 			'X-Image-Upload-Debug': this.opt.debug? 'yes' : '',
 		};
+		if (IS_SERVER && this.opt.serverHash) {
+			requestHeaders['x-server-key'] = this.opt.serverHash;
+		}
 		if (!/^https?:\/\//.test(uri)) {
 			if (!uri) {
 				throw new TypeError('fetch: no url argument.');
@@ -51,9 +55,6 @@ export class ServiceApi {
 		
 		method = method.toLowerCase();
 		if (params) {
-			if (this.opt.serverHash && (method !== 'put')) {
-				params.serverHash = this.opt.serverHash;
-			}
 			if (method === 'post') {
 				req = {
 					method: method,
