@@ -20,6 +20,9 @@ export class ImageProcessor {
 				message: data.message,
 				resizeUrl: data.resizeUrl,
 			};
+		}, (e) => {
+			e.message = 'resize image error: ' + e.message;
+			return Promise.reject(e);
 		});
 	}
 	

@@ -1,6 +1,6 @@
 let fileObject: {file: HTMLInputElement, reject: Function};
 
-function destroy(file?: HTMLInputElement) {
+function destroy(file: HTMLInputElement) {
 	document.body.removeChild(file);
 	if (file && fileObject.file !== file) {
 		return;
@@ -22,7 +22,7 @@ export function createInputField(): Promise<File> {
 	file.style.display = 'none';
 	
 	if (fileObject) {
-		destroy();
+		fileObject.reject();
 	}
 	
 	document.body.appendChild(file);

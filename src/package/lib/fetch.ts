@@ -1,6 +1,10 @@
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {ServiceOptions} from "../";
 import {noSlashStart} from "./string";
 import Qs = require('qs');
+
+const debug = createLogger(LOG_LEVEL.INFO, 'file-upload');
 
 export type FetchApi = (...args: any[]) => Promise<any>;
 
@@ -26,19 +30,20 @@ export class ServiceApi {
 	
 	public async request(method: string, uri: string, params?: any, _options: any = {}) {
 		let req;
-		let requestHeaders: any = {};
+		let requestHeaders: any = {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json',
+			'X-Image-Upload-Debug': this.opt.debug? 'yes' : '',
+		};
 		if (!/^https?:\/\//.test(uri)) {
 			if (!uri) {
 				throw new TypeError('fetch: no url argument.');
 			}
 			const type = this.opt.type;
 			uri = `${this.opt.serverUrl}api/${type}/${noSlashStart(uri)}`;
-			requestHeaders = {
-				'X-Image-Login-Token': this.userToken,
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-				'X-Image-Upload-Debug': this.opt.debug? 'yes' : '',
-			};
+		}
+		if (this.userToken) {
+			requestHeaders['X-Image-Login-Token'] = this.userToken;
 		}
 		if (_options.headers) {
 			Object.assign(requestHeaders, _options.headers);
@@ -65,6 +70,10 @@ export class ServiceApi {
 					method: method,
 				};
 			}
+		} else {
+			req = {
+				method: method,
+			};
 		}
 		
 		req.headers = requestHeaders;
@@ -75,6 +84,7 @@ export class ServiceApi {
 		req.redirect = 'follow';
 		req.cache = 'no-cache';
 		
+		debug('fetch: %s %O', uri, req);
 		const response = await fetch(uri, req);
 		let data;
 		if (response.status === 200) {

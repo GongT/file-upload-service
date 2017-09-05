@@ -1,3 +1,5 @@
+import {createLogger} from "@gongt/ts-stl-library/log/debug";
+import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
 import {createInputField} from "./lib/dom";
 import {ServiceApi} from "./lib/fetch";
 import {extendUrlGetter, FilePropertiesClientExtend} from "./lib/get-url";
@@ -5,6 +7,7 @@ import {normalizeOptions} from "./lib/options";
 import {sha256_file} from "./lib/sha256_extra";
 import {SignApiResult} from "./public-define";
 
+const debug = createLogger(LOG_LEVEL.INFO, 'file-upload');
 export {ImageProcessor} from "./processor/image";
 
 export interface KeyValuePair {
@@ -26,6 +29,15 @@ export enum EUploadType {
 	file = 'file',
 }
 
+const handleMethod = ['requestSignUrl',
+	'doUploadFile',
+	'completeUploadFile',
+	'simpleUploadFile',
+	'headlessUploadFile',
+	'fetchFile',
+	'holdFile',
+	'releaseFile',];
+
 export class UploadService {
 	private api: ServiceApi;
 	
@@ -34,7 +46,18 @@ export class UploadService {
 	
 	constructor(private opt: ServiceOptions) {
 		normalizeOptions(opt);
+		debug('create instance: %O', opt);
 		this.api = new ServiceApi(opt);
+		
+		for (const method of handleMethod) {
+			const mtd = this[method];
+			this[method] = (...args: any[]) => {
+				return mtd.apply(this, args).catch((e) => {
+					e.message = 'UploadService.'+method + '(): ' + e.message;
+					return Promise.reject(e);
+				});
+			};
+		}
 	}
 	
 	/** @internal */
@@ -48,6 +71,7 @@ export class UploadService {
 	}
 	
 	public attachUserToken(newToken: string) {
+		debug('attachUserToken(%s)', newToken);
 		this.api.attachUserToken(newToken);
 	}
 	
