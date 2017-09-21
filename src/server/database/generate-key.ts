@@ -1,10 +1,11 @@
 import {createHash} from "crypto";
-import {define as defineMimeType, extension} from "mime";
+import {define as defineMimeType, getExtension} from "mime";
 import {resolve} from "path";
 
 defineMimeType({
 	'application/x-zip-compressed': ['zip'],
-});
+	'application/zip': ['zip'],
+}, true);
 
 export function getFileRelatedToRootPath(time: Date, fileKey: string) {
 	return resolve('/',
@@ -16,7 +17,7 @@ export function getFileRelatedToRootPath(time: Date, fileKey: string) {
 }
 
 export function createFileName(time: Date, fileHash: string, mime: string) {
-	const extStr = extension(mime);
+	const extStr = getExtension(mime);
 	
 	if (!extStr) {
 		return null;
