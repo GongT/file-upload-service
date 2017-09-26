@@ -4,17 +4,17 @@
 	"description": "",
 	"main": "./index.js",
 	"dependencies": {
-		"@gongt/ts-stl-library": ">=1.5.16",
+		"@gongt/ts-stl-library": ">=1.5.18",
 		"node-fetch": "^1.7.3",
 		"whatwg-fetch": "^2.0.3",
 		"qs": "^6.5.1",
-		"sha.js": "^2.4.8",
+		"sha.js": "^2.4.9",
 		"source-map-support": "*"
 	},
 	"devDependencies": {
 		"@gongt/dts-concat": "*",
 		"@gongt/jenv-data": "*",
-		"@types/node": "^8.0.28",
+		"@types/node": "^8.0.31",
 		"@types/qs": "^6.5.0"
 	},
 	"peerDependencies": {}
