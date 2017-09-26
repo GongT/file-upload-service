@@ -93,15 +93,15 @@ export abstract class UploadBase<ExtraProps extends FilePropertiesServer> extend
 		return wrappedMeta;
 	}
 	
-	checkExistsByHash(hash: string, upsert?: KeyValuePair, meta?: KeyValuePair) {
+	async checkExistsByHash(hash: string, upsert?: KeyValuePair, meta?: KeyValuePair) {
 		this.sill('fetch file with hash: %s', hash);
 		
 		let hasMeta = meta && Object.keys(meta).length > 0;
 		
-		let p: Promise<MongoObj<ExtraProps>>;
+		let object: MongoObj<ExtraProps>;
 		
 		if (upsert) {
-			p = this.findOneAndUpdate({fileHash: hash}, {
+			object = await this.findOneAndUpdate({fileHash: hash}, {
 				$setOnInsert: upsert,
 				$set: hasMeta? this.wrapMeta(meta) : {attachedData: {}},
 			}, {
@@ -109,16 +109,17 @@ export abstract class UploadBase<ExtraProps extends FilePropertiesServer> extend
 				'new': true,
 				setDefaultsOnInsert: true,
 			});
+			if (!object.hasUploaded && upsert.mime && object.mime !== upsert.mime) {
+				object = await this.findOneAndUpdate({_id: object._id}, {$set: upsert}, {'new': true});
+			}
 		} else {
-			p = this.findOne({fileHash: hash});
+			object = await this.findOne({fileHash: hash});
 		}
 		
-		return p.then((object) => {
-			if (!object) {
-				throw new Error('Database Error: upload-items ::upsert() failed. without error.');
-			}
-			return object;
-		});
+		if (!object) {
+			throw new Error('Database Error: upload-items ::upsert() failed. without error.');
+		}
+		return object;
 	}
 	
 	async getFileBuffer(object: MongoObj<ExtraProps>): Promise<Buffer> {

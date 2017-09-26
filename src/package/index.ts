@@ -11,7 +11,7 @@ const debug = createLogger(LOG_LEVEL.INFO, 'file-upload');
 export {ImageProcessor} from "./processor/image";
 
 export interface KeyValuePair {
-	[id: string]: string;
+	[id: string]: string|object;
 }
 
 export const FileUploadPassingVar = 'FileUploadRemoteUrl';

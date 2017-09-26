@@ -79,13 +79,12 @@ export function promiseHandler(redux: ReduxStoreWindow<any>) {
 				store.dispatch(new failed(RequestError.convert(err).response(), subStore).toJSON());
 			});
 		}
-		promise.catch().then(() => {
-			store.dispatch(hideMaskAction);
-		});
 		
 		return promise.then((data) => {
+			store.dispatch(hideMaskAction);
 			return <any>new ResponseAction({data}, RequestHandler).toJSON();
 		}, (error) => {
+			store.dispatch(hideMaskAction);
 			return <any>new ResponseAction({error}, RequestHandler).toJSON();
 		});
 	});
