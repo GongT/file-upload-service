@@ -1,5 +1,8 @@
+import {TranslateService} from "@gongt/i18n-client";
+import {I18nObject} from "@gongt/i18n-client/def";
 import {createLogger} from "@gongt/ts-stl-library/log/debug";
 import {LOG_LEVEL} from "@gongt/ts-stl-library/log/levels";
+import {TranslationFunction} from "i18next";
 import {createInputField} from "./lib/dom";
 import {ServiceApi} from "./lib/fetch";
 import {extendUrlGetter, FilePropertiesClientExtend} from "./lib/get-url";
@@ -18,7 +21,7 @@ export const FileUploadPassingVar = 'FileUploadRemoteUrl';
 
 export interface ServiceOptions {
 	serverHash?: string;
-	projectName?: string;
+	projectName?: string|symbol;
 	debug?: boolean;
 	serverUrl?: string;
 	type?: EUploadType;
@@ -39,24 +42,39 @@ const handleMethod = ['requestSignUrl',
 	'releaseFile',];
 
 export class UploadService {
+	private static i18n: I18nObject;
+	private t: TranslationFunction;
+	private maxSizeKb: number = 2048;
 	private api: ServiceApi;
 	
 	static readonly image = EUploadType.image;
 	static readonly file = EUploadType.file;
 	
-	constructor(private opt: ServiceOptions) {
+	constructor(private opt: ServiceOptions = {}) {
+		if (!UploadService.i18n) {
+			UploadService.i18n = (new TranslateService()).instance('file-upload');
+		}
+		
+		this.t = UploadService.i18n.t.bind(UploadService.i18n);
+		
 		normalizeOptions(opt);
-		debug('create instance: %O', opt);
+		debug(this.t('create instance') + ': %O', opt);
 		this.api = new ServiceApi(opt);
 		
 		for (const method of handleMethod) {
 			const mtd = this[method];
 			this[method] = (...args: any[]) => {
 				return mtd.apply(this, args).catch((e) => {
-					e.message = 'UploadService.'+method + '(): ' + e.message;
+					e.message = 'UploadService.' + method + '(): ' + e.message;
 					return Promise.reject(e);
 				});
 			};
+		}
+	}
+	
+	static wait() {
+		if (this.i18n) {
+			return this.i18n.wait;
 		}
 	}
 	
@@ -85,10 +103,13 @@ export class UploadService {
 	
 	async requestSignUrl(fileObject: File, metaData: KeyValuePair = {}): Promise<SignApiResult> {
 		if (!fileObject) {
-			return Promise.reject(new Error('please select file'));
+			return Promise.reject(new Error(this.t('please select file')));
 		}
-		if (fileObject.size > 1000 * 1000 * 500) {
-			return Promise.reject(new Error('file too large, must < 500kb'));
+		if (!fileObject.type) {
+			return Promise.reject(new Error(this.t('can not detect file type.')));
+		}
+		if (fileObject.size > 1000 * 1000 * this.maxSizeKb) {
+			return Promise.reject(new Error(this.t('file too large, must < ' + this.maxSizeKb + 'kb')));
 		}
 		const hash: string = await sha256_file(fileObject);
 		console.log('hash file: %s', hash);
@@ -105,6 +126,9 @@ export class UploadService {
 		}
 		if (!sign.signedUrl) {
 			return Promise.reject(new Error('sign failed'));
+		}
+		if (fileObject.size > 1000 * 1000 * this.maxSizeKb) {
+			return Promise.reject(new Error('file too large, must < ' + this.maxSizeKb + 'kb'));
 		}
 		await this.api.request('put', sign.signedUrl, fileObject, {
 			headers: {
@@ -148,7 +172,7 @@ export class UploadService {
 		}
 		return this.api.request('post', 'hold-file', {
 			id: fileId,
-			holder: this.opt.projectName + '::' + holder,
+			holder: this.opt.projectName.toString() + '::' + holder,
 			relatedId,
 		});
 	}
@@ -159,7 +183,7 @@ export class UploadService {
 		}
 		return this.api.request('post', 'release-file', {
 			id: fileId,
-			holder: this.opt.projectName + '::' + holder,
+			holder: this.opt.projectName.toString() + '::' + holder,
 			relatedId,
 		});
 	}

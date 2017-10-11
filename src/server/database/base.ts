@@ -13,11 +13,11 @@ import {
 	SchemaTypes,
 	Types,
 } from "mongoose";
-import {DriverOptions} from "server/library/backend";
-import {FileProcessorCreator} from "server/library/processor/base";
 import {KeyValuePair} from "../../package";
 import {FilePropertiesServer, IHolder} from "../../package/public-define";
+import {DriverOptions} from "../library/backend";
 import {StorageDriver} from "../library/base.driver";
+import {FileProcessorCreator} from "../library/processor/base";
 
 export type MongoObj<T> = T&TypedDocument<T>;
 
@@ -44,7 +44,7 @@ export const UploadItemsSchema: SchemaDefinition = {
 	},
 	hasUploaded: {
 		type: Boolean,
-		default: false,
+		"default": false,
 	},
 	error: {
 		type: SchemaTypes.Mixed,
@@ -52,7 +52,7 @@ export const UploadItemsSchema: SchemaDefinition = {
 	},
 	holders: {
 		type: [holderSchema],
-		default: [],
+		"default": [],
 	},
 	attachedData: {
 		type: Object,
@@ -76,6 +76,8 @@ export abstract class UploadBase<ExtraProps extends FilePropertiesServer> extend
 	protected abstract getStorageOptions(): DatabaseOptions;
 	
 	protected abstract createSchemaExtra(): SchemaDefinition;
+	
+	public abstract verifyType(mime: string): boolean;
 	
 	protected createSchema(): SchemaDefinition {
 		return Object.assign({}, UploadItemsSchema, this.createSchemaExtra());

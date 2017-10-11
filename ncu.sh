@@ -3,6 +3,7 @@
 ncu -a -u
 cd src/package
 ncu -a -u
+cd ../..
 
 echo "
 Object.keys(require('./package.json').devDependencies)

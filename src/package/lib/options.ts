@@ -1,3 +1,4 @@
+import {alertJenv} from "@gongt/jenv-data/alert";
 import {IS_CLIENT, IS_SERVER, isomorphicGlobal} from "@gongt/ts-stl-library/check-environment";
 import {GlobalVariable} from "@gongt/ts-stl-library/pattern/global-page-data";
 import {EUploadType, FileUploadPassingVar, ServiceOptions} from "../";
@@ -28,15 +29,19 @@ export function normalizeOptions(opt: ServiceOptions) {
 }
 
 function guessOptions(opt: ServiceOptions) {
+	alertJenv(opt, 'serverUrl');
 	if (!opt.serverUrl) {
-		opt.serverUrl = getRequestUrl();
+		opt.serverUrl = getRequestUrl(opt.projectName);
 	}
 	opt.serverUrl = safeUrl(opt.serverUrl);
 	if (!opt.serverUrl) {
 		throw new Error('file-upload: require option: serverUrl');
 	}
-	if (!opt.serverHash && IS_SERVER) {
-		opt.serverHash = getServerToken();
+	if (IS_SERVER) {
+		alertJenv(opt, 'serverHash');
+		if (!opt.serverHash) {
+			opt.serverHash = getServerToken();
+		}
 	}
 	if (!opt.projectName) {
 		if (IS_SERVER) {
@@ -67,7 +72,9 @@ function safeUrl(str: string) {
 	return str;
 }
 
-function getRequestUrl() {
+export const INTERNAL_TESTING_PROJECT = 'file-upload-testing';
+
+function getRequestUrl(projectName: symbol|string) {
 	let {serverUrl}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
 	if (serverUrl) {
 		if (!/https?:/.test(serverUrl)) {
@@ -77,6 +84,10 @@ function getRequestUrl() {
 		try {
 			const {JsonEnv} = require('@gongt/jenv-data');
 			serverUrl = JsonEnv.upload['apiEndPoint'] || 'http://file-upload.' + JsonEnv.baseDomainName;
+			if (!process.env.RUN_IN_DOCKER && projectName === INTERNAL_TESTING_PROJECT) {
+				// this package imported by file-upload server, and is testing it-self.
+				serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
+			}
 		} catch (e) {
 		}
 	}

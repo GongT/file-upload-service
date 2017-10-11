@@ -8,6 +8,7 @@ import {resolve} from "path";
 import * as serveStatic from "serve-static";
 import {EUploadType, UploadService} from "../package";
 import {passOptionsToPackage} from "../package/express";
+import {INTERNAL_TESTING_PROJECT} from "../package/lib/options";
 import {SERVER_ROOT} from "./boot";
 
 const jspm = new JspmCdnPlugin({
@@ -26,13 +27,8 @@ if (!process.env.RUN_IN_DOCKER) {
 }
 
 export function createDebugPages(type: EUploadType, app: Application) {
-	let serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
-	if (!!process.env.RUN_IN_DOCKER) {
-		serverUrl = 'http://file-upload.' + JsonEnv.baseDomainName + '/';
-	}
 	const client = new UploadService({
-		projectName: 'self-test',
-		serverUrl,
+		projectName: INTERNAL_TESTING_PROJECT,
 		type,
 	});
 	

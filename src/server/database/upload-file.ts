@@ -32,4 +32,8 @@ export class UploadFiles extends UploadBase<FilePropertiesServer> {
 	protected createSchemaExtra(): SchemaDefinition {
 		return UploadItemsSchema;
 	}
+	
+	verifyType(mime: string): boolean {
+		return true;
+	}
 }

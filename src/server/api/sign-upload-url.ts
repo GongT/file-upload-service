@@ -1,5 +1,6 @@
-import {ApiRequest, ApiResponse} from "@gongt/ts-stl-library/request/protocol";
+import {ApiRequest, ApiResponse, STATUS_CODE} from "@gongt/ts-stl-library/request/protocol";
 import {ERequestType} from "@gongt/ts-stl-library/request/request";
+import {RequestError} from "@gongt/ts-stl-library/request/request-error";
 import {JsonApiHandler} from "@gongt/ts-stl-server/express/api-handler";
 import {ValueChecker} from "@gongt/ts-stl-server/value-checker/value-checker";
 import {KeyValuePair} from "../../package";
@@ -24,6 +25,10 @@ export function signUploadUrlApi<T extends FilePropertiesServer>(model: UploadBa
 		const {mime, hash, meta,} = context.params;
 		handler.sill('request check ok: file type is %s', mime);
 		let uploadUrl: string = '';
+		
+		if (!model.verifyType(mime)) {
+			throw new RequestError(STATUS_CODE.INVALID_INPUT, 'file type wrong');
+		}
 		
 		const fileObject = await model.checkExistsByHash(hash, {mime: mime}, meta).then((fileObject) => {
 			if (fileObject.hasUploaded) {

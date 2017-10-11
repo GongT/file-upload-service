@@ -32,4 +32,8 @@ export class UploadImages extends UploadBase<FilePropertiesServer> {
 	protected createSchemaExtra(): SchemaDefinition {
 		return UploadItemsSchema;
 	}
+	
+	verifyType(mime: string): boolean {
+		return mime.startsWith('image/');
+	}
 }
