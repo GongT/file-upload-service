@@ -13,6 +13,7 @@ export interface FileProperties extends MyDocument {
 	url: string;
 	urlInternal: string;
 	mime: string;
+	mimeReal: string;
 	attachedData: {
 		[name: string]: any;
 	};

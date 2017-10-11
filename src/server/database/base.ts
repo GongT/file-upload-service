@@ -17,6 +17,7 @@ import {KeyValuePair} from "../../package";
 import {FilePropertiesServer, IHolder} from "../../package/public-define";
 import {DriverOptions} from "../library/backend";
 import {StorageDriver} from "../library/base.driver";
+import {detectMime} from "../library/helper/mime";
 import {FileProcessorCreator} from "../library/processor/base";
 
 export type MongoObj<T> = T&TypedDocument<T>;
@@ -35,6 +36,9 @@ export const UploadItemsSchema: SchemaDefinition = {
 		required: true,
 	},
 	mime: {
+		type: String,
+	},
+	mimeReal: {
 		type: String,
 	},
 	fileHash: {
@@ -169,7 +173,16 @@ export abstract class UploadBase<ExtraProps extends FilePropertiesServer> extend
 		}
 		this.sill('got file object, but not know is uploaded or not.');
 		
-		await this.getFileBuffer(object);
+		const buffer = await this.getFileBuffer(object);
+		
+		if (!object.mimeReal) {
+			const mime = await detectMime(buffer);
+			
+			object.set('mimeReal', mime);
+			
+			await object.save();
+		}
+		
 		return object;
 	}
 	
