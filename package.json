@@ -12,9 +12,9 @@
 	"dependencies": {
 		"@gongt/i18n-client": "^1.5.2",
 		"@gongt/jenv-data": "^1.3.4",
-		"@gongt/jspm": "^1.0.8",
-		"@gongt/ts-stl-library": ">=1.5.20",
-		"@gongt/ts-stl-server": ">=1.5.20",
+		"@gongt/jspm": "^1.0.9",
+		"@gongt/ts-stl-library": ">=1.5.23",
+		"@gongt/ts-stl-server": ">=1.5.23",
 		"ali-oss": "^4.10.1",
 		"aws-sdk": "^2.131.0",
 		"body-parser": "^1.18.2",

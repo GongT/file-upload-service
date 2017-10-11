@@ -65,7 +65,8 @@ export function promiseHandler(redux: ReduxStoreWindow<any>) {
 			promise = (payload as IRequestP<any, any>).promise;
 		} else {
 			const {api, args} = payload as IRequestA;
-			promise = store.getState().ServiceObject[api](...args);
+			promise = store.getState()
+				.ServiceObject[api](...args);
 		}
 		if (payload.hasOwnProperty('success')) {
 			const {success, store: subStore} = payload as IRequestR;

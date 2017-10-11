@@ -3,7 +3,6 @@ import {VirtualStore} from "@gongt/ts-stl-client/redux/virtual-store";
 
 const service = new UploadService({
 	debug: true,
-	serverUrl: location.origin,
 });
 
 window['_debug_service'] = service;

@@ -15,15 +15,24 @@ const jspm = new JspmCdnPlugin({
 	packageName: 'tester',
 	packageJsonFile: resolve(SERVER_ROOT, 'package.json'),
 });
+const jspmConfig = jspm.jspmConfig();
 jspm.clientCodeLocation(
 	resolve(SERVER_ROOT, 'dist/client'),
 	resolve(SERVER_ROOT, 'src/simple-test-pages'),
 );
-jspm.jspmConfig().registerExtension('css');
+jspmConfig.registerExtension('css');
 
+jspmConfig.manualRegisterModule('@gongt/file-upload-client', {
+	'defaultExtension': 'js',
+	'format': 'cjs',
+	'main': 'index.js',
+});
+jspmConfig.pathMap('@gongt/file-upload-client', 'self-package');
+
+jspm.addNodeModulesLayer(resolve(SERVER_ROOT, 'node_modules'));
 if (!process.env.RUN_IN_DOCKER) {
-	jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-library');
-	jspm.jspmConfig().registerNodeModules('@gongt/ts-stl-client');
+	jspmConfig.registerNodeModules('@gongt/ts-stl-library');
+	jspmConfig.registerNodeModules('@gongt/ts-stl-client');
 }
 
 export function createDebugPages(type: EUploadType, app: Application) {

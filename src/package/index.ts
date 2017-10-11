@@ -95,10 +95,11 @@ export class UploadService {
 	
 	passToClient() {
 		return {
+			internalDebugMode: this.opt['internalDebugMode'],
 			serverUrl: this.opt.serverUrl.replace(/^https?:/, ''),
 			projectName: this.opt.projectName,
 			type: this.opt.type,
-		};
+		} as ServiceOptions;
 	}
 	
 	async requestSignUrl(fileObject: File, metaData: KeyValuePair = {}): Promise<SignApiResult> {
@@ -121,6 +122,7 @@ export class UploadService {
 		if (data.signedUrl && location.protocol === 'https:' && /^http:/.test(data.signedUrl)) {
 			data.signedUrl = data.signedUrl.replace(/^http:/, 'https:');
 		}
+		return data;
 	}
 	
 	async doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesClientExtend> {

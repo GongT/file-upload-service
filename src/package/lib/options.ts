@@ -31,7 +31,7 @@ export function normalizeOptions(opt: ServiceOptions) {
 function guessOptions(opt: ServiceOptions) {
 	alertJenv(opt, 'serverUrl');
 	if (!opt.serverUrl) {
-		opt.serverUrl = getRequestUrl(opt.projectName);
+		getRequestUrl(opt);
 	}
 	opt.serverUrl = safeUrl(opt.serverUrl);
 	if (!opt.serverUrl) {
@@ -74,10 +74,13 @@ function safeUrl(str: string) {
 
 export const INTERNAL_TESTING_PROJECT = 'file-upload-testing';
 
-function getRequestUrl(projectName: symbol|string) {
-	let {serverUrl}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
+function getRequestUrl(opt: ServiceOptions): void {
+	const {projectName} = opt;
+	let {serverUrl, internalDebugMode}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
 	if (serverUrl) {
-		if (!/https?:/.test(serverUrl)) {
+		if (internalDebugMode) {
+			serverUrl = location.origin + '/';
+		} else if (!/https?:/.test(serverUrl)) {
 			serverUrl = location.protocol + serverUrl;
 		}
 	} else if (IS_SERVER) {
@@ -87,11 +90,12 @@ function getRequestUrl(projectName: symbol|string) {
 			if (!process.env.RUN_IN_DOCKER && projectName === INTERNAL_TESTING_PROJECT) {
 				// this package imported by file-upload server, and is testing it-self.
 				serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
+				opt['internalDebugMode'] = true;
 			}
 		} catch (e) {
 		}
 	}
-	return serverUrl;
+	opt.serverUrl = serverUrl;
 }
 
 function getServerToken() {
