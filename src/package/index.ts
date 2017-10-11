@@ -113,11 +113,14 @@ export class UploadService {
 		}
 		const hash: string = await sha256_file(fileObject);
 		console.log('hash file: %s', hash);
-		return this.api.request('post', 'sign-upload-url', {
+		const data: SignApiResult = await this.api.request('post', 'sign-upload-url', {
 			mime: fileObject.type,
 			meta: metaData,
 			hash: hash,
 		});
+		if (data.signedUrl && location.protocol === 'https:' && /^http:/.test(data.signedUrl)) {
+			data.signedUrl = data.signedUrl.replace(/^http:/, 'https:');
+		}
 	}
 	
 	async doUploadFile(sign: SignApiResult, fileObject: File): Promise<FilePropertiesClientExtend> {
