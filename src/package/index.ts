@@ -17,6 +17,7 @@ export interface KeyValuePair {
 	[id: string]: string|object;
 }
 
+const OCTET_STREAM = 'application/octet-stream';
 export const FileUploadPassingVar = 'FileUploadRemoteUrl';
 
 export interface ServiceOptions {
@@ -106,16 +107,13 @@ export class UploadService {
 		if (!fileObject) {
 			return Promise.reject(new Error(this.t('please select file')));
 		}
-		if (!fileObject.type) {
-			return Promise.reject(new Error(this.t('can not detect file type.')));
-		}
 		if (fileObject.size > 1000 * 1000 * this.maxSizeKb) {
 			return Promise.reject(new Error(this.t('file too large, must < ' + this.maxSizeKb + 'kb')));
 		}
 		const hash: string = await sha256_file(fileObject);
 		console.log('hash file: %s', hash);
 		const data: SignApiResult = await this.api.request('post', 'sign-upload-url', {
-			mime: fileObject.type,
+			mime: fileObject.type || OCTET_STREAM,
 			meta: metaData,
 			hash: hash,
 		});
@@ -137,7 +135,7 @@ export class UploadService {
 		}
 		await this.api.request('put', sign.signedUrl, fileObject, {
 			headers: {
-				'Content-Type': fileObject.type,
+				'Content-Type': fileObject.type || OCTET_STREAM,
 			},
 		});
 		await this.completeUploadFile(sign);
