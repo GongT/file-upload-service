@@ -53,7 +53,8 @@ export class UploadService {
 	
 	constructor(private opt: ServiceOptions = {}) {
 		if (!UploadService.i18n) {
-			UploadService.i18n = (new TranslateService()).instance('file-upload');
+			const i18nCreator = new TranslateService();
+			UploadService.i18n = i18nCreator.instance('file-upload');
 		}
 		
 		this.t = UploadService.i18n.t.bind(UploadService.i18n);

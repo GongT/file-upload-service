@@ -1,6 +1,6 @@
 import {GlobalVariable} from "@gongt/ts-stl-library/pattern/global-page-data";
 import {Handler, NextFunction, Request, Response} from "express-serve-static-core";
-import {FileUploadPassingVar, UploadService} from "./";
+import {FileUploadPassingVar, UploadService} from "./index";
 
 export function passOptionsToPackage(uploader: UploadService): Handler {
 	return function (req: Request, res: Response, next: NextFunction) {
