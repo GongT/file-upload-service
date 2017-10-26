@@ -21,6 +21,7 @@ const OCTET_STREAM = 'application/octet-stream';
 export const FileUploadPassingVar = 'FileUploadRemoteUrl';
 
 export interface ServiceOptions {
+	debugForceHttps?: boolean;
 	serverHash?: string;
 	projectName?: string|symbol;
 	debug?: boolean;
@@ -98,6 +99,7 @@ export class UploadService {
 	passToClient() {
 		return {
 			internalDebugMode: this.opt['internalDebugMode'],
+			debugForceHttps: this.opt.debugForceHttps,
 			serverUrl: this.opt.serverUrl.replace(/^https?:/, ''),
 			projectName: this.opt.projectName,
 			type: this.opt.type,

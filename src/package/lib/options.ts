@@ -76,7 +76,7 @@ export const INTERNAL_TESTING_PROJECT = 'file-upload-testing';
 
 function getRequestUrl(opt: ServiceOptions): void {
 	const {projectName} = opt;
-	let {serverUrl, internalDebugMode}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
+	let {serverUrl, internalDebugMode, debugForceHttps}:any = GlobalVariable.get(isomorphicGlobal, FileUploadPassingVar) || {};
 	if (serverUrl) {
 		if (internalDebugMode) {
 			serverUrl = location.origin + '/';
@@ -91,9 +91,13 @@ function getRequestUrl(opt: ServiceOptions): void {
 				// this package imported by file-upload server, and is testing it-self.
 				serverUrl = 'http://127.0.0.1:' + process.env.LISTEN_PORT + '/';
 				opt['internalDebugMode'] = true;
+			} else if (JsonEnv.upload['apiEndPoint'] && !opt.hasOwnProperty('debugForceHttps')) {
+				opt.debugForceHttps = true;
 			}
 		} catch (e) {
 		}
+	} else if (debugForceHttps && /^\/\//.test(serverUrl)) {
+		serverUrl = 'https:' + serverUrl;
 	}
 	opt.serverUrl = serverUrl;
 }
