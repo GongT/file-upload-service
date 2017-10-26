@@ -96,7 +96,8 @@ function getRequestUrl(opt: ServiceOptions): void {
 			}
 		} catch (e) {
 		}
-	} else if (debugForceHttps && /^\/\//.test(serverUrl)) {
+	}
+	if (debugForceHttps && /^\/\//.test(serverUrl)) {
 		serverUrl = 'https:' + serverUrl;
 	}
 	opt.serverUrl = serverUrl;
