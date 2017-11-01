@@ -1,5 +1,4 @@
 import {awaitIterator} from "@gongt/ts-stl-library/pattern/await-iterator";
-import {basename} from "path"
 import {resolve} from "url";
 import {SaveResult, SignResult} from "../../package/public-define";
 import {BackendOptions, SaveGenerateFileOptions, StorageBackend} from "./backend";
@@ -54,9 +53,15 @@ export class OSSBackend implements StorageBackend {
 	}
 	
 	save(options: SaveGenerateFileOptions): Promise<SaveResult> {
+		let clientName = ['attachment'];
+		if (options.meta && options.meta.originalFileName) {
+			clientName.push(`filename=${JSON.stringify(options.meta.originalFileName)}`);
+		}
+		clientName.push(`filename=${JSON.stringify(options.fileName)}`);
+		
 		const headers = {
 			'Content-MD5': options.hash,
-			'Content-Disposition': basename(options.fileName),
+			'Content-Disposition': clientName.join('; '),
 			'Content-Length': options.buffer.length,
 		};
 		if (options.expires) {

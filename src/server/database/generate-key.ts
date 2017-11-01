@@ -1,6 +1,7 @@
+import {Metadata} from "aws-sdk/clients/s3";
 import {createHash} from "crypto";
 import {define as defineMimeType, getExtension} from "mime";
-import {resolve} from "path";
+import {extname, resolve} from "path";
 
 defineMimeType({
 	'application/x-zip-compressed': ['zip'],
@@ -16,11 +17,15 @@ export function getFileRelatedToRootPath(time: Date, fileKey: string) {
 	).replace(/^\//g, '');
 }
 
-export function createFileName(time: Date, fileHash: string, mime: string) {
-	const extStr = getExtension(mime);
+export function createFileName(time: Date, fileHash: string, mime: string, metaData: Metadata = {}) {
+	let extStr = getExtension(mime);
 	
 	if (!extStr) {
 		return null;
+	}
+	
+	if (extStr === 'bin' && metaData.originalFileName) {
+		extStr = extname(metaData.originalFileName).replace(/^\./, '');
 	}
 	
 	return `${md5(fileHash)}.${time.getUTCHours()}${time.getUTCMinutes()}${time.getUTCSeconds()}.${extStr}`

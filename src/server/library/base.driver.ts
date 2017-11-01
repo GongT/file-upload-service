@@ -22,7 +22,7 @@ export class StorageDriver {
 	}
 	
 	sign(object: FileProperties): Promise<SignResult> {
-		const key = createFileName(object.createdAt, object.fileHash, object.mime);
+		const key = createFileName(object.createdAt, object.fileHash, object.mime, object.attachedData);
 		if (!key) {
 			throw new Error('not support file type: ' + object.mime + ', please compress them.');
 		}

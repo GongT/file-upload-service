@@ -115,6 +115,7 @@ export class UploadService {
 		}
 		const hash: string = await sha256_file(fileObject);
 		console.log('hash file: %s', hash);
+		metaData.originalFileName = fileObject.name;
 		const data: SignApiResult = await this.api.request('post', 'sign-upload-url', {
 			mime: fileObject.type || OCTET_STREAM,
 			meta: metaData,

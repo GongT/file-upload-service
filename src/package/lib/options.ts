@@ -81,7 +81,11 @@ function getRequestUrl(opt: ServiceOptions): void {
 		if (internalDebugMode) {
 			serverUrl = location.origin + '/';
 		} else if (!/https?:/.test(serverUrl)) {
-			serverUrl = location.protocol + serverUrl;
+			if (debugForceHttps) {
+				serverUrl = 'https:' + serverUrl;
+			} else {
+				serverUrl = location.protocol + serverUrl;
+			}
 		}
 	} else if (IS_SERVER) {
 		try {

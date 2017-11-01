@@ -18,11 +18,14 @@ export interface SignResponse extends ApiResponse, SignApiResult {
 
 export function signUploadUrlApi<T extends FilePropertiesServer>(model: UploadBase<T>) {
 	const handler = new JsonApiHandler<SignRequest, SignResponse>(ERequestType.TYPE_POST, '/sign-upload-url');
-	handler.handleArgument('meta').fromPost().optional({}).filter(new ValueChecker().isObject().getFunction());
-	handler.handleArgument('hash').fromPost().filter(new ValueChecker().isString().isNotEmpty().getFunction());
-	handler.handleArgument('mime').fromPost().optional('application/octet-stream').filter(new ValueChecker().isString().isNotEmpty().getFunction());
+	handler.handleArgument('meta').fromPost().optional({})
+	       .filter(new ValueChecker().isObject());
+	handler.handleArgument('hash').fromPost()
+	       .filter(new ValueChecker().isString().isNotEmpty());
+	handler.handleArgument('mime').fromPost().optional('application/octet-stream')
+	       .filter(new ValueChecker().isString().isNotEmpty());
 	handler.setHandler(async (context) => {
-		const {mime, hash, meta,} = context.params;
+		const {mime, hash, meta} = context.params;
 		handler.sill('request check ok: file type is %s', mime);
 		let uploadUrl: string = '';
 		
