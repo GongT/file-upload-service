@@ -5,7 +5,7 @@ export function testPost(url: string, params: object) {
 		headers: {
 			'Accept': 'application/json',
 			'Content-Type': 'application/json',
-		},
+		} as any, // todo : new Headers()
 	}).then((response) => {
 		if (response.status === 200) {
 			if (/\/json/.test(response.headers.get('content-type'))) {
