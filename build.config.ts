@@ -21,7 +21,7 @@ build.domainName(projectName + '.' + JsonEnv.baseDomainName);
 
 build.systemd({
 	type: 'notify',
-	watchdog: 10,
+	// watchdog: 10,
 });
 
 build.forceLocalDns();
